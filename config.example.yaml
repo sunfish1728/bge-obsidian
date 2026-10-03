@@ -1,0 +1,27 @@
+# Copy to config.yaml (same folder). Only `vault` is required; everything else has defaults.
+vault: "D:/Obsidian/MyVault"
+inbox: "_inbox"          # excluded from the index; drop new material here
+review_dir: "_review"    # duplicates are moved here by the agent
+
+backend: local           # local (Visualized_m3, text + images) | api (bge-m3 text only)
+local:
+  device: cuda
+  fp16: true
+  batch_size: 16
+api:
+  base_url: https://api.siliconflow.cn/v1   # any OpenAI-compatible /embeddings endpoint
+  model: BAAI/bge-m3
+  api_key_env: BGE_OBS_API_KEY              # the key is read from this environment variable
+
+thresholds:              # cosine similarity; calibrate on your own vault
+  dup: 0.95
+  near_dup: 0.85
+  chunk_match: 0.92
+  contained_ratio: 0.80
+  image_dup: 0.97
+  classify_min: 0.55
+  classify_margin: 0.03
+  tag_min: 0.55
+
+folders:                 # optional: describe folders that have fewer than 3 notes
+  # "學習/深度學習": 神經網路、訓練方法、模型架構

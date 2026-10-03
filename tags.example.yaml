@@ -1,0 +1,6 @@
+# Tag list: `tag: one-sentence description`. The description is embedded and matched against notes.
+# Place it at the path shown by `bge-obs status` (tags_file).
+python: Python 程式語言、套件、語法與實作範例
+llm: 大型語言模型、提示工程、Agent、RAG
+skill: Claude Code 或 Codex 的 Skill 定義與使用方式
+paper: 學術論文、研究方法與實驗結果

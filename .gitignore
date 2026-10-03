@@ -1,0 +1,9 @@
+.venv/
+vendor/
+models/
+__pycache__/
+*.egg-info/
+state/
+config.yaml
+.pytest_cache/
+.pip-cache/

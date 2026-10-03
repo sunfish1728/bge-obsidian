@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bge-obs"
+version = "0.1.0"
+description = "Embedding-based preprocessing for Obsidian vaults, driven by Claude Code / Codex skills"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy",
+  "pyyaml",
+  "httpx",
+  "pymupdf",
+  "charset-normalizer",
+  "scikit-learn",
+]
+
+[project.optional-dependencies]
+local = [
+  "torch",
+  "torchvision",
+  "transformers>=4.40,<5",
+  "timm",
+  "einops",
+  "ftfy",
+  "sentencepiece",
+  "pillow",
+]
+dev = ["pytest"]
+
+[project.scripts]
+bge-obs = "bge_obs.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["bge_obs*"]
