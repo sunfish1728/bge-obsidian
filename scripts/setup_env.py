@@ -20,6 +20,8 @@ def main() -> None:
     flavour.add_argument("--cuda", action="store_true")
     parser.add_argument("--cuda-index", default="cu128")
     parser.add_argument("--skip-models", action="store_true")
+    parser.add_argument("--vault", help="Obsidian vault: write it to config.yaml and install the skill there")
+    parser.add_argument("--index", action="store_true", help="build the vault index after setup (needs --vault)")
     parser.add_argument("--recreate", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
@@ -105,10 +107,37 @@ def main() -> None:
         print(f"Copy config.example.yaml to {config}")
         if not args.dry_run:
             shutil.copyfile(ROOT / "config.example.yaml", config)
-    print("Next: set vault in config.yaml, then run:")
-    cli = target / ("Scripts/bge-obs" if os.name == "nt" else "bin/bge-obs")
-    print(f'  "{cli}" index')
-    print(f'  "{python}" scripts/install_skill.py')
+    cli = target / ("Scripts/bge-obs.exe" if os.name == "nt" else "bin/bge-obs")
+    if args.vault:
+        vault = Path(args.vault).expanduser().resolve()
+        if not vault.is_dir():
+            raise RuntimeError(f"vault folder not found: {vault}")
+        print(f"Set vault in {config}: {vault}")
+        if not args.dry_run:
+            set_vault(config, vault)
+        run([python, ROOT / "scripts" / "install_skill.py", "--vault", vault], check=True)
+        if args.index:
+            run([cli, "index"], check=True)
+        print("Done. Open the vault in Claude Code or Codex and ask it to organise _inbox.")
+        if not args.index:
+            print(f'Build the index once with:  "{cli}" index')
+    else:
+        print("Next: set vault in config.yaml, then run:")
+        print(f'  "{cli}" index')
+        print(f'  "{python}" scripts/install_skill.py')
+
+
+def set_vault(config: Path, vault: Path) -> None:
+    """Set the top-level `vault:` key in config.yaml, keeping every other line."""
+    line = f'vault: "{vault.as_posix()}"'
+    lines = config.read_text(encoding="utf-8").splitlines() if config.exists() else []
+    for i, existing in enumerate(lines):
+        if existing.startswith("vault:"):
+            lines[i] = line
+            break
+    else:
+        lines.insert(0, line)
+    config.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":
