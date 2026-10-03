@@ -4,10 +4,30 @@
 
 所有檔案都留在本資料夾內：虛擬環境 `.venv/`、模型 `models/`、索引與服務狀態 `state/`、設定 `config.yaml`。
 
-## 安裝
+## 一鍵安裝（拉取 + 安裝 + 安裝 Skill）
+
+需要 git 與 Python 3.10 以上。會在目前資料夾下建立 `bge-obsidian/`，再次執行即更新。
+
+Windows（PowerShell）：
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/sunfish1728/bge-obsidian/main/install.ps1))) -Vault "D:\MyVault" -Index
+```
+
+macOS / Linux：
 
 ```bash
-python scripts/setup_env.py
+curl -fsSL https://raw.githubusercontent.com/sunfish1728/bge-obsidian/main/install.sh | bash -s -- --vault ~/MyVault --index
+```
+
+選項：`-Dir` / `--dir` 安裝位置、`-Cpu` / `--cpu` 或 `-Cuda` / `--cuda` 指定 torch 版本（預設依 `nvidia-smi` 自動判斷）、`-SkipModels` / `--skip-models`、`-Index` / `--index` 安裝後立即建立索引、`-DryRun` / `--dry-run` 只列出要執行的指令。
+
+腳本會：clone 或 `git pull` 本倉庫 → 建立專案內 `.venv` 並安裝對應的 torch → 下載 FlagEmbedding 與模型 → 把 vault 寫入 `config.yaml` → 將 Skill 安裝到 vault 的 `.claude/skills/` 與 `.agents/skills/`。所有快取都留在安裝資料夾內。
+
+## 手動安裝
+
+```bash
+python scripts/setup_env.py --vault "D:/MyVault"
 # 模型已經備妥時：
 python scripts/setup_env.py --skip-models
 # 只看預計執行的指令，不修改檔案：
