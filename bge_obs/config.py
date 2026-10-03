@@ -32,8 +32,9 @@ DEFAULTS: dict[str, Any] = {
     "local": {
         "text_model": str(PROJECT_ROOT / "models" / "bge-m3"),
         "visual_weight": str(PROJECT_ROOT / "models" / "Visualized_m3.pth"),
-        "device": "cuda",
-        "fp16": True,
+        "device": "auto",
+        "fp16": "auto",
+        "threads": None,
         "batch_size": 16,
         "max_tokens": 1024,
     },
@@ -58,7 +59,7 @@ DEFAULTS: dict[str, Any] = {
         "probe_min": 0.999,
     },
     "folders": {},
-    "server": {"idle_minutes": 30},
+    "server": {"idle_minutes": 30, "start_timeout": 300},
 }
 
 

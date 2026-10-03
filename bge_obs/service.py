@@ -119,6 +119,11 @@ class Service:
                "uptime_s": round(time.time() - self.started)}
         if idx.count():
             out["probe"] = idx.check_probe(self.embedder)
+        if self._embedder is not None or self.cfg["backend"] == "local":
+            emb = self.embedder
+            out["embedder"] = {"backend": emb.name,
+                               "device": getattr(emb, "device_name", None),
+                               "precision": getattr(emb, "precision", None)}
         return out
 
     def index_cmd(self, rebuild: bool = False) -> dict:

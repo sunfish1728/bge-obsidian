@@ -16,6 +16,26 @@ from .base import DIM, Embedder, EmbedderError, normalize
 VISUAL_BGE_SRC = PROJECT_ROOT / "vendor" / "FlagEmbedding" / "research" / "visual_bge"
 
 
+def resolve_device(requested: str, cuda_available: bool) -> str:
+    if requested == "auto":
+        return "cuda" if cuda_available else "cpu"
+    if requested == "cuda":
+        if not cuda_available:
+            raise EmbedderError("CUDA is unavailable; set device: auto or device: cpu")
+        return "cuda"
+    if requested == "cpu":
+        return "cpu"
+    raise EmbedderError(f"Unknown device: {requested}; use auto, cuda or cpu")
+
+
+def resolve_precision(fp16_opt, device: str) -> bool:
+    if fp16_opt == "auto":
+        return device == "cuda"
+    if not isinstance(fp16_opt, bool):
+        raise EmbedderError("fp16 must be auto, true or false")
+    return fp16_opt and device == "cuda"
+
+
 class LocalVisualEmbedder(Embedder):
     name = "local"
     supports_images = True
@@ -38,18 +58,25 @@ class LocalVisualEmbedder(Embedder):
             sys.path.insert(0, str(VISUAL_BGE_SRC))
         from visual_bge.modeling import Visualized_BGE
 
-        want_cuda = opts.get("device", "cuda") == "cuda"
-        if want_cuda and not torch.cuda.is_available():
-            raise EmbedderError("device=cuda requested but CUDA is not available")
+        self.device_name = resolve_device(opts.get("device", "auto"), torch.cuda.is_available())
+        use_fp16 = resolve_precision(opts.get("fp16", "auto"), self.device_name)
+        self.precision = "fp16" if use_fp16 else "fp32"
+        threads = opts.get("threads")
+        if threads is not None and self.device_name == "cpu":
+            torch.set_num_threads(int(threads))
 
-        model = Visualized_BGE(model_name_bge=str(text_model), model_weight=str(weight))
+        # Map checkpoint pages instead of allocating a second full CPU copy.
+        class MappedVisualBGE(Visualized_BGE):
+            def load_model(self, model_weight):
+                self.load_state_dict(torch.load(model_weight, map_location="cpu", mmap=True))
+
+        model = MappedVisualBGE(model_name_bge=str(text_model), model_weight=str(weight))
         # Visualized_BGE moves itself to CUDA when available; honour device=cpu explicitly.
-        device = torch.device("cuda" if want_cuda else "cpu")
-        model.to(device)
+        device = torch.device(self.device_name)
+        dtype = torch.float16 if use_fp16 else torch.float32
+        model.to(device=device, dtype=dtype)
         model.device = device
-        if opts.get("fp16", True) and device.type == "cuda":
-            model.half()
-            model.dtype = torch.float16  # used to build attention masks
+        model.dtype = dtype  # used to build attention masks on either device
         model.eval()
 
         self._torch = torch

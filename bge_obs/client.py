@@ -10,10 +10,10 @@ from pathlib import Path
 
 import httpx
 
-from .config import PROJECT_ROOT, STATE_ROOT
+from .config import PROJECT_ROOT, STATE_ROOT, load_config
 from .server import server_file
 
-START_TIMEOUT = 180  # model load can take ~20s cold, longer on first CUDA init
+START_TIMEOUT = 300  # default; overridden by server.start_timeout
 
 
 def _read(sf: Path) -> dict | None:
@@ -49,6 +49,7 @@ def _spawn(config_path: Path | None) -> None:
 
 
 def ensure_server(config_path: Path | None) -> dict:
+    start_timeout = float(load_config(config_path)["server"].get("start_timeout", START_TIMEOUT))
     sf = server_file(config_path)
     info = _read(sf)
     if _alive(info):
@@ -60,7 +61,7 @@ def ensure_server(config_path: Path | None) -> dict:
         os.close(fd)
         owner = True
     except FileExistsError:  # someone else is starting it; a stale lock expires
-        owner = time.time() - lock.stat().st_mtime > START_TIMEOUT
+        owner = time.time() - lock.stat().st_mtime > start_timeout
         if owner:
             lock.touch()
     try:
@@ -68,13 +69,13 @@ def ensure_server(config_path: Path | None) -> dict:
             if sf.exists():
                 sf.unlink()
             _spawn(config_path)
-        deadline = time.time() + START_TIMEOUT
+        deadline = time.time() + start_timeout
         while time.time() < deadline:
             info = _read(sf)
             if _alive(info):
                 return info
             time.sleep(0.5)
-        raise RuntimeError(f"server did not start within {START_TIMEOUT}s; see {STATE_ROOT / 'server.log'}")
+        raise RuntimeError(f"server did not start within {start_timeout:g}s; see {STATE_ROOT / 'server.log'}")
     finally:
         if owner:
             lock.unlink(missing_ok=True)

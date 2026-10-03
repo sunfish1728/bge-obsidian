@@ -5,8 +5,9 @@ review_dir: "_review"    # duplicates are moved here by the agent
 
 backend: local           # local (Visualized_m3, text + images) | api (bge-m3 text only)
 local:
-  device: cuda
-  fp16: true
+  device: auto
+  fp16: auto
+  threads: null          # CPU threads; null = torch default
   batch_size: 16
 api:
   base_url: https://api.siliconflow.cn/v1   # any OpenAI-compatible /embeddings endpoint
@@ -25,3 +26,7 @@ thresholds:              # cosine similarity; calibrate on your own vault
 
 folders:                 # optional: describe folders that have fewer than 3 notes
   # "學習/深度學習": 神經網路、訓練方法、模型架構
+
+server:
+  idle_minutes: 30
+  start_timeout: 300      # seconds to wait for the server to start

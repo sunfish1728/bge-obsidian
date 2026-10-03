@@ -7,14 +7,20 @@
 ## 安裝
 
 ```bash
-python -m venv .venv
-.venv/Scripts/python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu128
-.venv/Scripts/python -m pip install -e ".[local,dev]"
-git clone https://github.com/FlagOpen/FlagEmbedding.git vendor/FlagEmbedding
-.venv/Scripts/python scripts/download_model.py
+python scripts/setup_env.py
+# 模型已經備妥時：
+python scripts/setup_env.py --skip-models
+# 只看預計執行的指令，不修改檔案：
+python scripts/setup_env.py --dry-run --cpu --skip-models
 ```
 
-複製 `config.example.yaml` 為 `config.yaml`，填入 `vault` 路徑。
+需要 Python 3.10 以上。腳本會建立專案內的 `.venv`，以 `nvidia-smi` 判斷使用 CPU 或 CUDA；也可以指定 `--cpu` 或 `--cuda --cuda-index cu128`。已安裝且種類相符的 torch 會保留。`--recreate` 會直接刪除並重建 `.venv`，請只在確定要重建時使用。pip 快取在 `.pip-cache/`，Hugging Face 快取在 `models/.hf-cache/`，下載時跳過已存在的模型檔案。
+
+腳本會在缺少 `config.yaml` 時從範例複製，接著填入 `vault` 路徑。Windows 使用 `.venv/Scripts/`，macOS/Linux 使用 `.venv/bin/`。
+
+本機後端預設 `local.device: auto`、`local.fp16: auto`：CUDA 可用就用 CUDA 與 fp16，否則用 CPU 與 fp32。設定 `device: cpu` 可強制使用 CPU，CPU 上的 `fp16: true` 也會改用 fp32。`local.threads: null` 使用 torch 預設 CPU 執行緒數，也可填入正整數。`status` 的 `embedder` 欄位會顯示實際使用的 `device` 和 `precision`。
+
+CPU 載入與運算較慢；`server.start_timeout` 預設等候 300 秒，可在 `config.yaml` 調整。既有設定檔不會自動改寫，若原本指定 `device: cuda`，需要自行改為 `auto` 或 `cpu` 才能在沒有 CUDA 的電腦上使用。
 
 ## 使用
 
@@ -29,7 +35,9 @@ Skill 安裝後，在 vault 中對 Claude Code / Codex 說「把 _inbox 的資�
 ## 測試
 
 ```bash
-.venv/Scripts/python -m pytest tests -q
+.venv/Scripts/python -m pytest tests -q -p no:cacheprovider
+# 使用既有模型測試 CPU 文字與圖片向量（離線）：
+.venv/Scripts/python scripts/smoke_cpu.py
 ```
 
 測試使用 `backend: fake`（不需要 GPU 或模型）。
