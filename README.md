@@ -2,6 +2,8 @@
 
 給 Claude Code / Codex 用的 Obsidian 前處理工具：用 BAAI Visualized_m3（bge-m3 + 圖片）做去重、冗餘偵測、資料夾分類、標籤建議、相似筆記。工具只輸出 JSON，修改由 Agent 透過 Skill 執行。設計細節見 [PLAN.md](PLAN.md)。
 
+> 👋 **第一次使用？請看 [新手教學](docs/TUTORIAL.md)**
+
 所有檔案都留在本資料夾內：虛擬環境 `.venv/`、模型 `models/`、索引與服務狀態 `state/`、設定 `config.yaml`。
 
 ## 一鍵安裝（拉取 + 安裝 + 安裝 Skill）
